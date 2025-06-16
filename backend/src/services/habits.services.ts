@@ -1,27 +1,37 @@
 import { db } from "../drizzle";
-import { habitEntriesTable, habitsTable } from "../drizzle/schema";
+import { habitCategoriesTable, habitEntriesTable, habitsTable } from "../drizzle/schema";
 import { newHabitInput } from "../dtos/newHabitInput";
 import { v4 as uuidv4 } from 'uuid';
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, isNull } from "drizzle-orm";
 import dayjs from "dayjs";
+import { updateHabitInput } from "../dtos/updateHabit";
 
 export async function getAllHabits(userId: string, categoryId: string | undefined) {
     let habits;
 
-    if (categoryId) {
-        habits = await db.select().
-            from(habitsTable).
-            where(
-                and(
-                    eq(habitsTable.userId, userId),
-                    eq(habitsTable.categoryId, categoryId)
-                )
-            ).
-            orderBy(sql`created_at DESC`);
-    }
-    else {
-        habits = await db.select().from(habitsTable).where(eq(habitsTable.userId, userId));
-    }
+    if (categoryId && categoryId !== "null") {
+    habits = await db
+      .select()
+      .from(habitsTable)
+      .where(
+        and(
+          eq(habitsTable.userId, userId),
+          eq(habitsTable.categoryId, categoryId)
+        )
+      )
+      .orderBy(sql`created_at DESC`);
+  } else {
+    habits = await db
+      .select()
+      .from(habitsTable)
+      .where(
+        and(
+          eq(habitsTable.userId, userId),
+          isNull(habitsTable.categoryId)
+        )
+      )
+      .orderBy(sql`created_at DESC`);
+  }
 
     return habits;
 }
@@ -42,8 +52,20 @@ export async function createNewHabit(newHabit: newHabitInput, userId: string) {
     return { success: true };
 }
 
-export async function updateHabit(newHabit: newHabitInput, userId: string, habitId: string) {
-    const result = await db.update(habitsTable).set(newHabit).where(and(eq(habitsTable.userId, userId), eq(habitsTable.id, habitId)));
+export async function updateHabit(newHabit: updateHabitInput, userId: string, habitId: string) {
+    let categoryId;
+    if (newHabit.categoryName) {
+        categoryId = db.select().from(habitCategoriesTable).where(eq(habitCategoriesTable.name, newHabit.categoryName)).get()?.id;
+    }
+    console.log("categoryName", newHabit.categoryName);
+    
+    console.log("categoryId", categoryId);
+    
+
+    const result = await db.update(habitsTable).set({
+        ...newHabit,
+        categoryId: categoryId
+    }).where(and(eq(habitsTable.userId, userId), eq(habitsTable.id, habitId)));
 
     if (result.changes === 0) {
         throw new Error("Habit not found or you don't have permission to Update it.");

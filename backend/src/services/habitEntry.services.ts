@@ -63,30 +63,49 @@ export async function createNewHabitEntry(newHabitEntry: newHabitEntryInput) {
 
 
 export async function toggleHabitEntry(updatedEntry: updateHabitEntryInput) {
-    const today = dayjs().startOf('day').format('YYYY-MM-DD');
-    console.log("Today" + today);
-    
-    const [entry] = await db.select()
-        .from(habitEntriesTable)
-        .where(and(
-            eq(habitEntriesTable.habitId, updatedEntry.habitId),
-            eq(habitEntriesTable.date, today)
-        ));
+  const today = dayjs().startOf("day").format("YYYY-MM-DD");
 
-    if (!entry) {
-        throw new Error("Habit entry not found for that date.");
-    }
+  const [entry] = await db
+    .select()
+    .from(habitEntriesTable)
+    .where(
+      and(
+        eq(habitEntriesTable.habitId, updatedEntry.habitId),
+        eq(habitEntriesTable.date, today)
+      )
+    );
 
-    const updated = await db.update(habitEntriesTable)
-        .set({ completed: !entry.completed })
-        .where(eq(habitEntriesTable.id, entry.id));
+  if (!entry) {
+    // Create new entry (assume completed = true)
+    const [newEntry] = await db
+      .insert(habitEntriesTable)
+      .values({
+        id: uuidv4(),
+        habitId: updatedEntry.habitId,
+        date: today,
+        completed: true,
+      })
+      .returning();
 
-    if (updated.changes === 0) {
-        throw new Error("Failed to update habit entry.");
-    }
+    return {
+      id: newEntry.id,
+      completed: newEntry.completed,
+      message: "Entry created",
+    };
+  }
 
-    return { id: entry.id, completed: !entry.completed };
+  // Toggle the existing one
+  const [updated] = await db
+    .update(habitEntriesTable)
+    .set({ completed: !entry.completed })
+    .where(eq(habitEntriesTable.id, entry.id))
+    .returning();
 
+  return {
+    id: updated.id,
+    completed: updated.completed,
+    message: "Entry updated",
+  };
 }
 
 export async function deleteHabitEntryById(habitEntryId: string) {

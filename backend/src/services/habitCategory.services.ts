@@ -1,13 +1,29 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../drizzle";
-import { habitCategoriesTable } from "../drizzle/schema";
+import { habitCategoriesTable, habitsTable } from "../drizzle/schema";
 import { newHabitCategoryInput } from "../dtos/newHabitCategoryInput";
 import { v4 as uuidv4 } from 'uuid';
 
 export async function getAllHabitCategories() {
-    const result = await db.select().from(habitCategoriesTable);
+    // Get all categories
+    const categories = await db.select().from(habitCategoriesTable);
 
-    return result;
+    // For each category, get habits that belong to it
+    const categoriesWithHabits = await Promise.all(
+        categories.map(async (category) => {
+            const habits = await db
+                .select()
+                .from(habitsTable)
+                .where(eq(habitsTable.categoryId, category.id));
+
+            return {
+                ...category,
+                habits,
+            };
+        })
+    );
+
+    return categoriesWithHabits;
 }
 
 export async function createNewHabitCategory(newCategory: newHabitCategoryInput, userId: string) {

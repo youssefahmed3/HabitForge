@@ -3,6 +3,7 @@ import { newHabitSchema } from '../dtos/newHabitInput';
 import * as habitsService from '../services/habits.services';
 import { auth } from '../utils/auth';
 import { Request, Response } from 'express';
+import { updateHabitSchema } from '../dtos/updateHabit';
 
 
 
@@ -11,10 +12,12 @@ export async function getAllHabits(req: Request, res: Response) {
         headers: fromNodeHeaders(req.headers),
     });
 
+
+
     const categoryId = req.query.categoryId as string | undefined;
 
     const habits = await habitsService.getAllHabits(session?.user.id as string, categoryId);
-    res.status(201).json(habits);
+    res.status(200).json(habits);
 }
 
 
@@ -56,7 +59,7 @@ export async function updateHabit(req: Request, res: Response) {
         const habitId = req.params.id;
         console.log(habitId);
 
-        const parseResult = newHabitSchema.safeParse(req.body);
+        const parseResult = updateHabitSchema.safeParse(req.body);
 
         if (!parseResult.success) {
             res.status(400).json({ error: parseResult.error.format() });
