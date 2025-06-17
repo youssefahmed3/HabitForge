@@ -48,7 +48,7 @@ HabitForge is a modern, full-stack habit tracking application that helps users b
 1. **Clone the repo**
 
 ```bash
-git clone https://github.com/your-username/habitforge.git
+git clone https://github.com/youssefahmed3/habitforge.git
 cd habitforge
 
 # Install frontend dependencies
