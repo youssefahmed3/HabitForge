@@ -14,44 +14,47 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Book, Flame, Shell, TrendingUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useCategories } from "@/context/CategoriesContext";
+import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
+import { useHabitEntry } from "@/context/HabitEntryContext";
 
 function Page() {
-  const [uncategorizedHabits, setUncategorizedHabits] = useState([]);
+  const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
   const { categories, reloadCategories } = useCategories();
-  console.log("Categories from context:", categories);
+  const { reloadEntries, habitEntries } = useHabitEntry();
+
   useEffect(() => {
-    async function fetchData() {
-      const uncategorizedRes = await fetch(
-        "http://localhost:5000/habits?categoryId=null",
-        {
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      const uncategorized = await uncategorizedRes.json();
-
-      setUncategorizedHabits(uncategorized);
+    const allHabitIds = [
+      ...habits.map((h) => h.id),
+      ...categories.flatMap((c) => c.habits.map((h) => h.id)),
+    ];
+    if (allHabitIds.length > 0) {
+      reloadEntries(allHabitIds);
     }
+  }, [habits, categories]);
 
-    fetchData();
-  }, []);
+  console.log("Categories from context:", categories);
+  console.log("reloadUncategorizedHabits from context:", habits);
 
   const totalHabits = useMemo(() => {
     const categorizedCount = categories.reduce((total, category) => {
       return total + (category.habits?.length || 0);
     }, 0);
-    return categorizedCount + uncategorizedHabits.length;
-  }, [categories, uncategorizedHabits]);
+    return categorizedCount + habits.length;
+  }, [categories, habits]);
 
   const totalCategories = categories.length;
 
-  const completedToday = 0;
+  const completedToday = useMemo(() => {
+    return Object.values(habitEntries).filter((completed) => completed).length;
+  }, [habitEntries]);
 
-  // useMemo to avoid recomputation (optional)
+  const todayTotalTrackedHabits = Object.keys(habitEntries).length;
+
   const todayProgress = useMemo(() => {
-    return totalHabits === 0 ? 0 : (completedToday / totalHabits) * 100;
-  }, [completedToday, totalHabits]);
+    return todayTotalTrackedHabits === 0
+      ? 0
+      : (completedToday / todayTotalTrackedHabits) * 100;
+  }, [completedToday, todayTotalTrackedHabits]);
 
   return (
     <div className="bg-custom-background text-custom-text flex flex-col gap-2 px-6">
@@ -124,7 +127,7 @@ function Page() {
             <Column
               key="uncategorized"
               categoryTitle="Uncategorized"
-              habits={uncategorizedHabits}
+              habits={habits}
             />
 
             {/* Categorized Columns */}

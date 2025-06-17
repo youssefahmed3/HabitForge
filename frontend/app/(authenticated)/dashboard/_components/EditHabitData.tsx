@@ -24,12 +24,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Icons } from "@/components/icons";
+import { useCategories } from "@/context/CategoriesContext";
+import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "You need to enter a habit name!" }),
-  description: z
-    .string()
-    .optional()
+  description: z.string().optional(),
 });
 
 interface Habit {
@@ -49,6 +49,8 @@ interface EditHabitDialogProps {
 }
 function EditHabitDialog(props: EditHabitDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const { categories, reloadCategories } = useCategories();
+  const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,6 +78,8 @@ function EditHabitDialog(props: EditHabitDialogProps) {
       if (res.ok) {
         setIsLoading(false);
         form.reset();
+        await reloadCategories();
+        await reloadUncategorizedHabits();
         props.onOpenChange(false); // CLOSE the dialog
       }
     } catch (error) {

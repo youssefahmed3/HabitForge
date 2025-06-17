@@ -26,6 +26,8 @@ import {
 import { Icons } from "@/components/icons";
 import dayjs from "dayjs";
 import Image from "next/image";
+import { useCategories } from "@/context/CategoriesContext";
+import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Category name is required" }),
@@ -35,39 +37,42 @@ const formSchema = z.object({
 function AddHabitCategoryDialog() {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false); // for the close of the dialog
-
+  const { categories, reloadCategories } = useCategories();
+  const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      description: "", 
+      description: "",
     },
   });
 
   useEffect(() => {}, []);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-      try {
-        setIsLoading(true);
-        console.log(values);
-  
-        const res = await fetch("http://localhost:5000/habit-categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(values),
-        });
-  
-        if (res.ok) {
-          setIsLoading(false);
-          form.reset();
-          setDialogOpen(false); // CLOSE the dialog
-        }
-      } catch (error) {
-        console.log(error);
+    try {
+      setIsLoading(true);
+      console.log(values);
+
+      const res = await fetch("http://localhost:5000/habit-categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(values),
+      });
+
+      if (res.ok) {
         setIsLoading(false);
+        form.reset();
+        await reloadCategories();
+        await reloadUncategorizedHabits();
+        setDialogOpen(false); // CLOSE the dialog
       }
+    } catch (error) {
+      console.log(error);
+      setIsLoading(false);
     }
+  }
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -95,7 +100,11 @@ function AddHabitCategoryDialog() {
                 <FormItem>
                   <FormLabel>Category Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="eg. Exercise, Work, Self-Care..." type="text" {...field} />
+                    <Input
+                      placeholder="eg. Exercise, Work, Self-Care..."
+                      type="text"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -108,7 +117,11 @@ function AddHabitCategoryDialog() {
                 <FormItem>
                   <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Describe what types of habits belong in this category..." type="text" {...field} />
+                    <Input
+                      placeholder="Describe what types of habits belong in this category..."
+                      type="text"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -117,7 +130,9 @@ function AddHabitCategoryDialog() {
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" className="cursor-pointer">Cancel</Button>
+                <Button variant="outline" className="cursor-pointer">
+                  Cancel
+                </Button>
               </DialogClose>
               <Button
                 type="submit"

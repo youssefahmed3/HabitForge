@@ -9,26 +9,30 @@ import dayjs from 'dayjs';
 
 export async function getHabitEntries(req: Request, res: Response) {
     try {
-        const { habitId, range, start, end } = req.query;
+        let habitIds = req.query.habitId;
 
-        // habit id is required so we make sure that it is not null and also is a string
-        if (!habitId || typeof habitId !== "string") {
-            res.status(400).json({ error: "Missing or invalid habitId" });
+        // Normalize to array
+        if (!habitIds) {
+            res.status(400).json({ error: "Missing habitId parameter" });
             return;
         }
 
+        if (typeof habitIds === "string") {
+            habitIds = [habitIds];
+        }
+
+        const { range, start, end } = req.query;
+
         const result = await habitEntryService.getHabitEntries(
-            habitId,
+            habitIds as string[],
             typeof range === "string" ? range : undefined,
             typeof start === "string" ? start : undefined,
             typeof end === "string" ? end : undefined
         );
 
         res.status(200).json(result);
-
-
     } catch (error: any) {
-        res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 }
 

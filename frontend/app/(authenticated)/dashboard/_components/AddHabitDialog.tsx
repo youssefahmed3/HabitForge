@@ -26,6 +26,8 @@ import {
 import { Icons } from "@/components/icons";
 import dayjs from "dayjs";
 import Image from "next/image";
+import { useCategories } from "@/context/CategoriesContext";
+import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Habit name is required" }),
@@ -36,7 +38,8 @@ const formSchema = z.object({
 function AddHabitDialog() {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false); // for the close of the dialog
-
+  const { categories, reloadCategories } = useCategories();
+  const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,6 +66,8 @@ function AddHabitDialog() {
       if (res.ok) {
         setIsLoading(false);
         form.reset();
+        await reloadCategories();
+        await reloadUncategorizedHabits();
         setDialogOpen(false); // CLOSE the dialog
       }
     } catch (error) {

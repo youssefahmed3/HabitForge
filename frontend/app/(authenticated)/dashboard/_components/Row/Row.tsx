@@ -17,6 +17,9 @@ import MoveToCategoryDialog from "../MoveToCategoryDialog";
 import { useCategories } from "@/context/CategoriesContext";
 import EditHabitDialog from "../EditHabitData";
 import ViewDetailsHabit from "../viewDetailsHabit";
+import dayjs from "dayjs";
+import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
+import { useHabitEntry } from "@/context/HabitEntryContext";
 
 interface RowProps {
   categoryTitle: string | null;
@@ -38,64 +41,34 @@ const Row = (props: RowProps) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: props.habit.id as string });
 
+  const { categories, reloadCategories } = useCategories();
+  const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
+  const { habitEntries, toggleHabitEntry } = useHabitEntry();
+  const isChecked = habitEntries[props.habit.id] ?? false;
+
   const style = {
     transition: transition,
     transform: CSS.Transform.toString(transform),
   };
   // console.log(props.habit);
 
-  const [isChecked, setIsChecked] = useState(false);
-
-  useEffect(() => {
-  const fetchHabitEntry = async () => {
-    try {
-      const res = await fetch(`http://localhost:5000/habit-entries?habitId=${props.habit.id}`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch habit entry");
-      }
-
-      const data = await res.json();
-
-      if (data && data.completed !== undefined) {
-        setIsChecked(data.completed);
-      }
-    } catch (error) {
-      console.error("Error fetching habit entry:", error);
-    }
+  const handleCheckChange = async () => {
+    await toggleHabitEntry(props.habit.id);
   };
 
-  fetchHabitEntry();
-}, [props.habit.id]);
-
-
-  const handleCheckChange = async () => {
-  try {
-    const res = await fetch("http://localhost:5000/habit-entries/toggle", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+  async function handleHabitDelete() {
+    const res = await fetch(`http://localhost:5000/habits/${props.habit.id}`, {
+      method: "DELETE",
       credentials: "include",
-      body: JSON.stringify({
-        habitId: props.habit.id,
-      }),
     });
+    const data = await res.json();
+    console.log(data);
 
-    if (!res.ok) {
-      throw new Error("Failed to toggle habit entry");
+    if (data.success === true) {
+      await reloadCategories();
+      await reloadUncategorizedHabits();
     }
-
-    const result = await res.json();
-    setIsChecked(result.completed); // backend tells us the new value
-    console.log(result.message, result);
-  } catch (error) {
-    console.error("Error toggling habit entry:", error);
   }
-};
 
   return (
     <div
@@ -115,6 +88,7 @@ const Row = (props: RowProps) => {
             <GripVertical className="" />
           </div>
           <Checkbox
+            // defaultChecked={}
             checked={isChecked}
             onCheckedChange={() => handleCheckChange()}
           />
@@ -159,7 +133,10 @@ const Row = (props: RowProps) => {
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem className="cursor-pointer bg-red-700 text-white">
+            <DropdownMenuItem
+              className="cursor-pointer bg-red-700 text-white"
+              onClick={() => handleHabitDelete()}
+            >
               Delete Habit
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -1,4 +1,4 @@
-import { and, between, eq, sql } from "drizzle-orm";
+import { and, between, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../drizzle";
 import { habitEntriesTable } from "../drizzle/schema";
 import dayjs from "dayjs";
@@ -8,20 +8,21 @@ import { updateHabitEntryInput } from "../dtos/updateHabitEntry";
 
 
 
-export async function getHabitEntries(habitId: string, range?: string, start?: string, end?: string) {
+export async function getHabitEntries(habitIds: string[], range?: string, start?: string, end?: string) {
+    if (!habitIds.length) return [];
 
     let result;
 
     if (range === "week") {
-        const today = dayjs().endOf("day").toISOString(); // e.g., 2025-06-14T23:59:59Z
-        const sevenDaysAgo = dayjs().startOf("day").subtract(6, "day").toISOString(); // e.g., 2025-06-08T00:00:00Z
+        const today = dayjs().endOf("day").toISOString();
+        const sevenDaysAgo = dayjs().startOf("day").subtract(6, "day").toISOString();
 
         result = await db
             .select()
             .from(habitEntriesTable)
             .where(
                 and(
-                    eq(habitEntriesTable.habitId, habitId),
+                    inArray(habitEntriesTable.habitId, habitIds),
                     between(habitEntriesTable.date, sevenDaysAgo, today)
                 )
             )
@@ -33,7 +34,7 @@ export async function getHabitEntries(habitId: string, range?: string, start?: s
             .from(habitEntriesTable)
             .where(
                 and(
-                    eq(habitEntriesTable.habitId, habitId),
+                    inArray(habitEntriesTable.habitId, habitIds), /// This is Really Magic is works like giving all teh habitids and it will return all the entries
                     between(habitEntriesTable.date, start, end)
                 )
             )

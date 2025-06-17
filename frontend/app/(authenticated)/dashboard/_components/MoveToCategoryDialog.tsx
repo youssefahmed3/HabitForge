@@ -35,9 +35,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCategories } from "@/context/CategoriesContext";
+import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
 
 const formSchema = z.object({
-  categoryName: z.string().min(1, { message: "You need to select a category!" }),
+  categoryName: z
+    .string()
+    .min(1, { message: "You need to select a category!" }),
 });
 
 interface MoveToCategoryDialogProps {
@@ -49,6 +52,7 @@ function MoveToCategoryDialog(props: MoveToCategoryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const { categories, reloadCategories } = useCategories();
+  const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -72,6 +76,8 @@ function MoveToCategoryDialog(props: MoveToCategoryDialogProps) {
       if (res.ok) {
         setIsLoading(false);
         form.reset();
+        await reloadCategories();
+        await reloadUncategorizedHabits();
         props.onOpenChange(false); // CLOSE the dialog
       }
     } catch (error) {
