@@ -17,9 +17,10 @@ import MoveToCategoryDialog from "../MoveToCategoryDialog";
 import { useCategories } from "@/context/CategoriesContext";
 import EditHabitDialog from "../EditHabitData";
 import ViewDetailsHabit from "../viewDetailsHabit";
-import dayjs from "dayjs";
+
 import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
 import { useHabitEntry } from "@/context/HabitEntryContext";
+import { HabitAnalytics, useAnalytics } from "@/context/AnalyticsContext";
 
 interface RowProps {
   categoryTitle: string | null;
@@ -44,13 +45,33 @@ const Row = (props: RowProps) => {
   const { categories, reloadCategories } = useCategories();
   const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
   const { habitEntries, toggleHabitEntry } = useHabitEntry();
+  const { fetchHabitAnalytics } = useAnalytics();
+  const [habitAnalytics, setHabitAnalytics] = useState<HabitAnalytics | null>(
+    null
+  );
+
   const isChecked = habitEntries[props.habit.id] ?? false;
 
   const style = {
     transition: transition,
     transform: CSS.Transform.toString(transform),
   };
-  // console.log(props.habit);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await fetchHabitAnalytics(props.habit.id);
+      if (data) {
+        console.log("Fetched Habit Analytics:", data);
+        
+        setHabitAnalytics(data);
+      }
+    };
+
+    fetchData();
+  }, [props.habit.id, fetchHabitAnalytics]);
+
+  // console.log(habitAnalytics);
+  
 
   const handleCheckChange = async () => {
     await toggleHabitEntry(props.habit.id);
@@ -74,7 +95,7 @@ const Row = (props: RowProps) => {
     <div
       ref={setNodeRef}
       style={style}
-      className="flex flex-col gap-2 p-2 py-4 w-[400px] m-2 bg-custom-secondary rounded-md text-white "
+      className="flex flex-col gap-2 p-2 py-4  m-2 bg-custom-secondary rounded-md text-white "
     >
       {/* card header */}
       <div className="flex justify-between items-center">
@@ -145,7 +166,7 @@ const Row = (props: RowProps) => {
 
       <div className="flex flex-col px-3 gap-4">
         <div className="flex gap-4 items-center">
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-1">
             <h3
               className={`text-lg ${
                 isChecked ? "line-through text-gray-400" : ""
@@ -153,22 +174,37 @@ const Row = (props: RowProps) => {
             >
               {props.habit.name}
             </h3>
-            <p
-              className={`text-sm ${
-                isChecked ? "line-through text-gray-400" : ""
-              }`}
-            >
-              {props.habit.description}
-            </p>
+
+            {props.habit.description === null ||
+            props.habit.description === "" ? (
+              <p
+                className={`italic text-muted text-sm  ${
+                  isChecked ? "line-through text-gray-400" : ""
+                }`}
+              >
+                There are no description for this habit
+              </p>
+            ) : (
+              <p
+                className={`italic text-sm  ${
+                  isChecked ? "line-through text-gray-400" : ""
+                }`}
+              >
+                {props.habit.description}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center justify-between ">
           <div className="flex text-orange-400">
-            <Flame className="" /> 12 Days Streak
+            <Flame className="" /> {habitAnalytics?.currentStreak || 0}{" "} Days Streak
           </div>
           <Badge variant="secondary">{props.categoryTitle}</Badge>
         </div>
       </div>
+
+      {/* Dialogs */}
+
       <MoveToCategoryDialog
         open={moveDialogOpen}
         onOpenChange={setMoveDialogOpen}

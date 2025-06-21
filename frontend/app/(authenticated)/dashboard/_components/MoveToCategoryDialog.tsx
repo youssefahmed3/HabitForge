@@ -92,7 +92,8 @@ function MoveToCategoryDialog(props: MoveToCategoryDialogProps) {
         <DialogHeader>
           <DialogTitle>Move Habit to Category</DialogTitle>
           <DialogDescription>
-            Create a new habit to track. Choose a clear, actionable goal.
+            Select a category to move the habit into. This will help you keep
+            your habits organized.
           </DialogDescription>
         </DialogHeader>
 

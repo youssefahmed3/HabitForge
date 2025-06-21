@@ -8,7 +8,7 @@ import { updateHabitEntryInput } from "../dtos/updateHabitEntry";
 
 
 
-export async function getHabitEntries(habitIds: string[], range?: string, start?: string, end?: string) {
+export async function getHabitEntries( habitIds: string[], range?: string, start?: string, end?: string) {
     if (!habitIds.length) return [];
 
     let result;

@@ -9,6 +9,10 @@ import dayjs from 'dayjs';
 
 export async function getHabitEntries(req: Request, res: Response) {
     try {
+        const session = await auth.api.getSession({
+            headers: fromNodeHeaders(req.headers),
+        });
+        
         let habitIds = req.query.habitId;
 
         // Normalize to array

@@ -25,32 +25,33 @@ import {
 } from "@/components/ui/form";
 import { Icons } from "@/components/icons";
 import { useCategories } from "@/context/CategoriesContext";
-import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: "You need to enter a habit name!" }),
+  name: z.string().min(1, { message: "You need to enter a Category name!" }),
   description: z.string().optional(),
 });
 
-interface Habit {
+interface Category {
   id: string;
   name: string;
   description: string | null;
-  categoryId: string;
   userId: string;
   createdAt: string;
   updatedAt: string;
 }
 
-interface EditHabitDialogProps {
+interface EditCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  habit: Habit;
+  category: Category;
 }
-function EditHabitDialog(props: EditHabitDialogProps) {
+function EditCategoryDialog(props: EditCategoryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { categories, reloadCategories } = useCategories();
-  const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
+
+  if (!props.category) return null; // Makes Sure that the category is defined before proceeding
+
+  console.log("Props Category in EditCategoryDialog: ", props.category);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,13 +62,13 @@ function EditHabitDialog(props: EditHabitDialogProps) {
   });
 
   useEffect(() => {
-    if (props.habit) {
+    if (props.category) {
       form.reset({
-        name: props.habit.name || "",
-        description: props.habit.description || "",
+        name: props.category.name || "",
+        description: props.category.description || "",
       });
     }
-  }, [props.habit, form]);
+  }, [props.category, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -75,7 +76,7 @@ function EditHabitDialog(props: EditHabitDialogProps) {
       console.log(values);
 
       const res = await fetch(
-        `http://localhost:5000/habits/${props.habit.id}`,
+        `http://localhost:5000/habit-categories/${props.category.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -88,7 +89,6 @@ function EditHabitDialog(props: EditHabitDialogProps) {
         setIsLoading(false);
         form.reset();
         await reloadCategories();
-        await reloadUncategorizedHabits();
         props.onOpenChange(false); // CLOSE the dialog
       }
     } catch (error) {
@@ -101,9 +101,10 @@ function EditHabitDialog(props: EditHabitDialogProps) {
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Habit Data</DialogTitle>
+          <DialogTitle>Edit Category Dialog</DialogTitle>
           <DialogDescription>
-            Create a new habit to track. Choose a clear, actionable goal.
+            Edit the details of your habit category. You can change the name and
+            add a description if needed.
           </DialogDescription>
         </DialogHeader>
 
@@ -117,9 +118,9 @@ function EditHabitDialog(props: EditHabitDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Habit Name</FormLabel>
+                  <FormLabel>Category Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Exercise" type="text" {...field} />
+                    <Input placeholder="e.g. Health" type="text" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -127,7 +128,6 @@ function EditHabitDialog(props: EditHabitDialogProps) {
             />
             <FormField
               control={form.control}
-              defaultValue={props.habit.description || ""}
               name="description"
               render={({ field }) => (
                 <FormItem>
@@ -158,10 +158,10 @@ function EditHabitDialog(props: EditHabitDialogProps) {
                 {isLoading ? (
                   <>
                     <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                    Editing A Habit
+                    Editing A Category
                   </>
                 ) : (
-                  "Edit Habit"
+                  "Edit Category"
                 )}
               </Button>
             </DialogFooter>
@@ -172,4 +172,4 @@ function EditHabitDialog(props: EditHabitDialogProps) {
   );
 }
 
-export default EditHabitDialog;
+export default EditCategoryDialog;

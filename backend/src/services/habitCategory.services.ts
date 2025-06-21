@@ -4,9 +4,9 @@ import { habitCategoriesTable, habitsTable } from "../drizzle/schema";
 import { newHabitCategoryInput } from "../dtos/newHabitCategoryInput";
 import { v4 as uuidv4 } from 'uuid';
 
-export async function getAllHabitCategories() {
+export async function getAllHabitCategories(userId: string) {
     // Get all categories
-    const categories = await db.select().from(habitCategoriesTable);
+    const categories = await db.select().from(habitCategoriesTable).where(eq(habitCategoriesTable.userId, userId));
 
     // For each category, get habits that belong to it
     const categoriesWithHabits = await Promise.all(

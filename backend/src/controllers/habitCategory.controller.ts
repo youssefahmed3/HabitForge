@@ -7,8 +7,11 @@ import { Request, Response } from 'express';
 
 
 export async function getAllHabitCategories(req: Request, res: Response) {
+    const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+    });
     try {
-        const result = await habitCategoryService.getAllHabitCategories();
+        const result = await habitCategoryService.getAllHabitCategories(session!.user.id);
         res.status(200).json({ result });
     } catch (error: any) {
         res.status(404).json({ error: error.message });

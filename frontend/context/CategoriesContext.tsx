@@ -7,7 +7,6 @@ import React, {
   ReactNode,
 } from "react";
 
-
 interface Habit {
   id: string;
   name: string;
@@ -32,6 +31,7 @@ interface CategoriesContextType {
   categories: Category[];
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   reloadCategories: () => Promise<void>;
+  getCategoryByName: (name: string) => Category | undefined;
 }
 
 const CategoriesContext = createContext<CategoriesContextType | undefined>(
@@ -54,13 +54,18 @@ export const CategoriesProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+
+  const getCategoryByName = (name: string): Category | undefined => {
+    return categories.find((category) => category.name === name);
+  };
+
   useEffect(() => {
     fetchCategories();
   }, []);
 
   return (
     <CategoriesContext.Provider
-      value={{ categories, setCategories, reloadCategories: fetchCategories }}
+      value={{ categories, setCategories, reloadCategories: fetchCategories, getCategoryByName }}
     >
       {children}
     </CategoriesContext.Provider>
