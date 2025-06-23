@@ -60,7 +60,7 @@ npm install
 ```
 
 ## Run The Development Server
-
+with two terminal
 ```bash
 # Start frontend
 npm run dev
@@ -68,4 +68,11 @@ npm run dev
 # Start backend
 cd backend
 npm run dev
+```
+
+## Run The Development Server with one line 
+go to the root directory and type 
+```bash
+npm run dev
+```
 
