@@ -32,6 +32,7 @@ import { Ellipsis, EllipsisVertical } from "lucide-react";
 import EditCategoryDialog from "./EditCategoryDialog";
 import { useCategories } from "@/context/CategoriesContext";
 import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
+import { useAnalytics } from "@/context/AnalyticsContext";
 
 interface Habit {
   id: string;
@@ -53,7 +54,6 @@ const Column = (props: ColumnProps) => {
   const [habits, setHabits] = useState(props.habits || []);
   const { reloadCategories, getCategoryByName } = useCategories();
   const { reloadUncategorizedHabits } = useUncategorizedHabits();
-
   const categoryData = getCategoryByName(props.categoryTitle);
 
   useEffect(() => {

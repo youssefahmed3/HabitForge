@@ -1,7 +1,14 @@
 "use client";
-import React, { createContext, useContext, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from "react";
 
-// Define the analytics data structure (adjust fields as needed)
+// TypeScript interface for a single habit's analytics
 export interface HabitAnalytics {
   habitId: string;
   totalDaysTracked: number;
@@ -9,12 +16,16 @@ export interface HabitAnalytics {
   completionRate: number;
   currentStreak: number;
   longestStreak: number;
-  // Add any more fields returned by your backend
 }
 
 // Context shape
 interface AnalyticsContextType {
-  fetchHabitAnalytics: (habitId: string) => Promise<HabitAnalytics | null>;
+  habitAnalytics: HabitAnalytics[];
+  getHabitAnalyticsById: (habitId: string) => HabitAnalytics | undefined;
+  longestStreak: number;
+  reloadAnalytics: () => Promise<void>;
+  loading: boolean;
+  error: string | null;
 }
 
 // Create the context
@@ -24,30 +35,58 @@ const AnalyticsContext = createContext<AnalyticsContextType | undefined>(
 
 // Provider component
 export const AnalyticsProvider = ({ children }: { children: ReactNode }) => {
-  const fetchHabitAnalytics = async (
-    habitId: string
-  ): Promise<HabitAnalytics | null> => {
+  const [habitAnalytics, setHabitAnalytics] = useState<HabitAnalytics[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [longestStreak, setLongestStreak] = useState<number>(0);
+
+  const fetchHabitAnalytics = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:5000/habits/${habitId}/stats`, {
+      setLoading(true);
+      setError(null);
+
+      const res = await fetch("http://localhost:5000/habits/stats", {
         credentials: "include",
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        console.error("Failed to fetch habit analytics", data);
-        return null;
+        throw new Error("Failed to fetch habit analytics");
       }
 
-      return data;
-    } catch (error) {
-      console.error("Error fetching habit analytics:", error);
-      return null;
+      const data: HabitAnalytics[] = await res.json();
+      setHabitAnalytics(data);
+
+      const maxStreak = data.reduce((max, habit) => {
+        return habit.longestStreak > max ? habit.longestStreak : max;
+      }, 0);
+      setLongestStreak(maxStreak);
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchHabitAnalytics();
+  }, [fetchHabitAnalytics]);
+
+  const getHabitAnalyticsById = useCallback(
+    (habitId: string) => habitAnalytics.find((a) => a.habitId === habitId),
+    [habitAnalytics]
+  );
 
   return (
-    <AnalyticsContext.Provider value={{ fetchHabitAnalytics }}>
+    <AnalyticsContext.Provider
+      value={{
+        longestStreak,
+        habitAnalytics,
+        getHabitAnalyticsById,
+        reloadAnalytics: fetchHabitAnalytics,
+        loading,
+        error,
+      }}
+    >
       {children}
     </AnalyticsContext.Provider>
   );

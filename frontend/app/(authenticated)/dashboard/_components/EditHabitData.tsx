@@ -103,7 +103,8 @@ function EditHabitDialog(props: EditHabitDialogProps) {
         <DialogHeader>
           <DialogTitle>Edit Habit Data</DialogTitle>
           <DialogDescription>
-            Create a new habit to track. Choose a clear, actionable goal.
+            Update the details of your habit below. You can change the name and
+            add a description if needed.
           </DialogDescription>
         </DialogHeader>
 

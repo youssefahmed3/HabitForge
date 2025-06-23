@@ -14,7 +14,7 @@ export async function getAllHabitCategories(userId: string) {
             const habits = await db
                 .select()
                 .from(habitsTable)
-                .where(eq(habitsTable.categoryId, category.id));
+                .where(and(eq(habitsTable.categoryId, category.id), eq(habitsTable.userId, userId)));
 
             return {
                 ...category,

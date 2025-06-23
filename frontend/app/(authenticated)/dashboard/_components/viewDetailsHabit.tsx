@@ -25,10 +25,22 @@ import {
 } from "@/components/ui/form";
 import { Icons } from "@/components/icons";
 
-const formSchema = z.object({
-  name: z.string().min(1, { message: "You need to enter a habit name!" }),
-  description: z.string().optional(),
-});
+import { useAnalytics, type HabitAnalytics } from "@/context/AnalyticsContext";
+import { ExampleChart } from "@/components/testChart";
+import { Monitor } from "lucide-react";
+import { ChartConfig } from "@/components/ui/chart";
+
+const chartConfig = {
+  desktop: {
+    label: "Desktop",
+    color: "#2563eb",
+    icon: Monitor,
+  },
+  mobile: {
+    label: "Mobile",
+    color: "#60a5fa",
+  },
+} satisfies ChartConfig;
 
 interface Habit {
   id: string;
@@ -44,48 +56,18 @@ interface EditHabitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   habit: Habit;
+  habitAnalytics: HabitAnalytics | undefined;
 }
+
 function ViewDetailsHabit(props: EditHabitDialogProps) {
-  const [stats, setStats] = useState();
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-    },
-  });
-
-  /* useEffect(() => {
-    async function fetchStatsHabit() {
-      try {
-        const res = await fetch(
-          `http://localhost:5000/habits/${props.habit.id}/stats`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          console.log(data);
-          
-          setStats(data);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchStatsHabit();
-  }, []); */
-
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>View Habit Data</DialogTitle>
           <DialogDescription>
-            Create a new habit to track. Choose a clear, actionable goal.
+            Here you can view the details of your habit. If you want to edit the
+            habit, please use the edit button.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col">
@@ -94,27 +76,24 @@ function ViewDetailsHabit(props: EditHabitDialogProps) {
           </div>
           <div>
             <span className="font-bold">Description:</span>{" "}
-            {props.habit.description}
+            {props.habit.description
+              ? props.habit.description
+              : "No description provided"}
           </div>
-{/*           <div>
-            <span>total Days Tracked:</span>
-            {stats!.totalDaysTracked}
-          </div>
-          <div>
-            <span>total Completed:</span>
-            {stats!.totalCompleted}
-          </div>
-          <div>
-            <span>completion Rate:</span>
-            {stats!.currentStreak}
-          </div>
-          <div>
-            <span>current Streak:</span>
-            {stats!.completionRate}
-          </div>
-          <div>
-            <span>longest Streak:</span>
-            {stats!.longestStreak}
+
+         {/*  <div className="">
+            <ExampleChart
+              chartConfig={chartConfig}
+              chartData={[
+                {
+                  name: props.habit.name,
+                  totalTracked: props.habitAnalytics?.totalDaysTracked,
+                  completed: props.habitAnalytics?.totalCompleted,
+                  rate: props.habitAnalytics?.completionRate,
+                  streak: props.habitAnalytics?.longestStreak,
+                },
+              ]}
+            />
           </div> */}
         </div>
       </DialogContent>

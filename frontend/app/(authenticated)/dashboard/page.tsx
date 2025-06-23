@@ -16,11 +16,13 @@ import { Progress } from "@/components/ui/progress";
 import { useCategories } from "@/context/CategoriesContext";
 import { useUncategorizedHabits } from "@/context/UncategorizedHabitsContext";
 import { useHabitEntry } from "@/context/HabitEntryContext";
+import { useAnalytics } from "@/context/AnalyticsContext";
 
 function Page() {
   const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
   const { categories, reloadCategories } = useCategories();
   const { reloadEntries, habitEntries } = useHabitEntry();
+  const { longestStreak } = useAnalytics();
 
   useEffect(() => {
     const allHabitIds = [
@@ -48,7 +50,7 @@ function Page() {
     return Object.values(habitEntries).filter((completed) => completed).length;
   }, [habitEntries]);
 
-  const todayTotalTrackedHabits = Object.keys(habitEntries).length;
+  const todayTotalTrackedHabits = totalHabits;
 
   const todayProgress = useMemo(() => {
     return todayTotalTrackedHabits === 0
@@ -86,7 +88,7 @@ function Page() {
 
         <StatsCard
           title="Longest Streak"
-          data={20}
+          data={longestStreak}
           description="Days"
           icon={<Flame />}
         />

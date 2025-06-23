@@ -55,7 +55,7 @@ export async function createNewHabit(newHabit: newHabitInput, userId: string) {
 export async function updateHabit(newHabit: updateHabitInput, userId: string, habitId: string) {
     let categoryId;
     if (newHabit.categoryName) {
-        categoryId = db.select().from(habitCategoriesTable).where(eq(habitCategoriesTable.name, newHabit.categoryName)).get()?.id;
+        categoryId = db.select().from(habitCategoriesTable).where(and(eq(habitCategoriesTable.name, newHabit.categoryName), eq(habitCategoriesTable.userId, userId))).get()?.id;
     }
     console.log("categoryName", newHabit.categoryName);
     
@@ -130,4 +130,61 @@ export async function getHabitStats(habitId: string) {
         currentStreak,
         longestStreak
     };
+}
+
+
+export async function getAllHabitStats(userId: string) {
+    // Get all the user's habits
+    const habits = await db
+        .select()
+        .from(habitsTable)
+        .where(eq(habitsTable.userId, userId));
+
+    const statsList = [];
+
+    for (const habit of habits) {
+        const entries = await db
+            .select()
+            .from(habitEntriesTable)
+            .where(eq(habitEntriesTable.habitId, habit.id));
+
+        const totalDaysTracked = entries.length;
+        const totalCompleted = entries.filter(e => e.completed).length;
+        const completionRate = totalDaysTracked > 0 ? (totalCompleted / totalDaysTracked) * 100 : 0;
+
+        const sorted = entries
+            .filter(e => e.date !== null)
+            .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
+
+        let streak = 0;
+        let longestStreak = 0;
+        let lastDate = null;
+
+        for (const entry of sorted) {
+            if (!entry.completed) {
+                streak = 0;
+                continue;
+            }
+
+            if (!lastDate || dayjs(entry.date).diff(dayjs(lastDate), 'day') === 1) {
+                streak += 1;
+            } else {
+                streak = 1;
+            }
+
+            longestStreak = Math.max(longestStreak, streak);
+            lastDate = entry.date;
+        }
+
+        statsList.push({
+            habitId: habit.id,
+            totalDaysTracked,
+            totalCompleted,
+            completionRate: Math.round(completionRate * 100) / 100,
+            currentStreak: streak,
+            longestStreak
+        });
+    }
+
+    return statsList;
 }

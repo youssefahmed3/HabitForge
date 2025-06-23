@@ -31,16 +31,39 @@ function UserMenu(props: UserMenuProps) {
       <DropdownMenuContent>
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <div className="flex flex-col gap-2">
+          <DropdownMenuItem
+            className="cursor-pointer "
+            onClick={async () => {
+              router.push("/dashboard");
 
-        <DropdownMenuItem
-          className="cursor-pointer bg-custom-accent"
-          onClick={async () => {
-            await authClient.signOut();
-            router.refresh();
-          }}
-        >
-          Log Out
-        </DropdownMenuItem>
+              router.refresh();
+            }}
+          >
+            Dashboard
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            className="cursor-pointer "
+            onClick={async () => {
+              router.push("/overview");
+
+              router.refresh();
+            }}
+          >
+            Overview
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            className="cursor-pointer bg-custom-accent"
+            onClick={async () => {
+              await authClient.signOut();
+              router.refresh();
+            }}
+          >
+            Log Out
+          </DropdownMenuItem>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -108,3 +108,19 @@ export async function getHabitStats(req: Request, res: Response) {
         res.status(500).json({ error: error.message });
     }
 }
+
+
+
+export async function getAllHabitStats(req: Request, res: Response) {
+    try {
+        const session = await auth.api.getSession({
+            headers: fromNodeHeaders(req.headers),
+        });
+
+        const stats = await habitsService.getAllHabitStats(session!.user.id);
+        res.status(200).json(stats);
+    } catch (error: any) {
+        console.error("Error in getAllHabitStats:", error);
+        res.status(500).json({ error: error.message });
+    }
+}

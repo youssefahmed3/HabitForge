@@ -45,10 +45,19 @@ const Row = (props: RowProps) => {
   const { categories, reloadCategories } = useCategories();
   const { habits, reloadUncategorizedHabits } = useUncategorizedHabits();
   const { habitEntries, toggleHabitEntry } = useHabitEntry();
-  const { fetchHabitAnalytics } = useAnalytics();
-  const [habitAnalytics, setHabitAnalytics] = useState<HabitAnalytics | null>(
-    null
-  );
+
+  const { getHabitAnalyticsById, reloadAnalytics, loading } = useAnalytics();
+
+  const [singleHabitAnalytics, setSingleHabitAnalytics] = useState<HabitAnalytics | undefined>(undefined);
+
+  useEffect(() => {
+    if (props.habit.id) {
+      const habitAnalytics = getHabitAnalyticsById(props.habit.id);
+      setSingleHabitAnalytics(habitAnalytics);
+      console.log("Analytics for habit:", props.habit.id, habitAnalytics);
+      
+    }
+  }, []);
 
   const isChecked = habitEntries[props.habit.id] ?? false;
 
@@ -56,22 +65,6 @@ const Row = (props: RowProps) => {
     transition: transition,
     transform: CSS.Transform.toString(transform),
   };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await fetchHabitAnalytics(props.habit.id);
-      if (data) {
-        console.log("Fetched Habit Analytics:", data);
-        
-        setHabitAnalytics(data);
-      }
-    };
-
-    fetchData();
-  }, [props.habit.id, fetchHabitAnalytics]);
-
-  // console.log(habitAnalytics);
-  
 
   const handleCheckChange = async () => {
     await toggleHabitEntry(props.habit.id);
@@ -197,7 +190,8 @@ const Row = (props: RowProps) => {
         </div>
         <div className="flex items-center justify-between ">
           <div className="flex text-orange-400">
-            <Flame className="" /> {habitAnalytics?.currentStreak || 0}{" "} Days Streak
+            <Flame className="" /> {singleHabitAnalytics?.currentStreak } Days
+            Streak
           </div>
           <Badge variant="secondary">{props.categoryTitle}</Badge>
         </div>
@@ -220,6 +214,7 @@ const Row = (props: RowProps) => {
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
         habit={props.habit}
+        habitAnalytics={singleHabitAnalytics}
       />
     </div>
   );
